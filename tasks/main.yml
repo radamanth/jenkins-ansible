@@ -56,7 +56,7 @@
 # Get latest Jenkins update file
 - name: Get Jenkins updates
   sudo: yes
-  get_url: url={{jenkin.updates_url}} dest="{{ jenkins_updates_dest}}.tmp" thirsty=yes mode=0440 owner=jenkins group=jenkins backup=yes
+  get_url: url={{jenkins_updates_url}} dest="{{ jenkins_updates_dest}}.tmp" thirsty=yes mode=0440 owner=jenkins group=jenkins backup=yes
   register: jenkins_updates
 
 - debug: var=jenkins_updates
