@@ -1,4 +1,4 @@
-gitlab-ansible
+jenkins-ansible
 =========
 
 Small Ansible role  for provisionning Jenkins behind an Apache2 
@@ -10,6 +10,7 @@ Requirements
 Role Variables
 --------------
 
+see defaults/main.yml
 
 Dependencies
 ------------
