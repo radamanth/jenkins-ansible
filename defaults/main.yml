@@ -1,26 +1,25 @@
 ---
-jenkins:
 # Local port use to run jenkins
-  local_port: 8081
+jenkins_local_port: 8081
 # Default passphras use for user jenkins 
-  default_passphrase: "YouShouldChangeThis"
+jenkins_default_passphrase: "YouShouldChangeThis"
 # You jenkins domain use by the reverse proxy
 # I personnaly use vars from  the inventory file eg:  {{ hostvars[groups['jenkins_server'][0]]['jen_domain'] }}"
-  domain: "jenkins.mydomain.com"
+jenkins_domain: "jenkins.mydomain.com"
 # Jenkins administrator mail 
-  admin_mail: "admin@jenkin.mydomain.com"
+jenkins_admin_mail: "admin@jenkin.mydomain.com"
 # I will lookup for this phrase exactly to ascertain that jenkins is fully loaded
-  start_phrase: "Jenkins is fully up and running"
+jenkins_start_phrase: "Jenkins is fully up and running"
 # A list of user that will be set in jenkins
-  users:
+jenkins_users:
   - { login: user1 }
   - { login: user2 } 
 # Jenkins Update center  URL
-  updates_url: http://updates.jenkins-ci.org/update-center.json
+jenkins_updates_url: http://updates.jenkins-ci.org/update-center.json
 # default jenkins update configuration
-  updates_dest: /var/lib/jenkins/updates/default.json
+jenkins_updates_dest: /var/lib/jenkins/updates/default.json
 # Some package used by jenkins
-  packages:
+jenkins_packages:
   - jenkins
   - build-essential
   - python-dev
@@ -37,9 +36,9 @@ jenkins:
   - libsqlite3-dev
   - python-virtualenv
 # Where to find the jenkins client, used to install plugins.
-  client: /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar
+jenkins_client: /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar
 #  some plugins, feel free to change the list. But beware of chuck
-  plugins:
+jenkins_plugins:
   - 'reverse-proxy-auth-plugin'
   - 'ldap'
   - 'github'
@@ -59,5 +58,5 @@ jenkins:
   - 'svn-release-mgr'
   - 'tracking-svn'
 
-
-
+# Slef Signed certficate subject
+jenkins_self_signed_cert_subj: "/C=FR/ST=France/L=Toulouse/O=IT/CN={{jenkins_domain}}"

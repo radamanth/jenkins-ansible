@@ -1,6 +1,6 @@
 ---
 
-- debug: var=jenkins.domain
+- debug: var=jenkins_domain
 
 - name: Update apt
   apt: update_cache=yes
@@ -20,19 +20,19 @@
 - name: Install jenkins
   action: apt pkg={{item}} update_cache=yes force=yes state=latest
   with_items: 
-  - "{{ jenkins.packages }}"
+  - "{{ jenkins_packages }}"
 
 - name: Add Jenkins to group shadow !
   user: name={{item.name}}  comment='Added via ansible' generate_ssh_key=yes ssh_key_bits=2048 ssh_key_passphrase={{item.passphrase}}  groups={{item.groups}}  shell=/bin/bash state=present
   with_items:
-   - {name: jenkins , groups: "shadow", passphrase: "{{ jenkins.default_passphrase }}"  }
+   - {name: jenkins , groups: "shadow", passphrase: "{{ jenkins_default_passphrase }}"  }
 
 
 
 - name: Disable Security for plugin update
-  set_fact: jenkins.use_auth="false"
+  set_fact: jenkins_use_auth="false"
 
-- debug: var=jenkins.use_auth
+- debug: var=jenkins_use_auth
 
 - name: Configure jenkins
   template: src={{item.src}} dest={{item.dest}}  owner=jenkins backup=yes
@@ -56,7 +56,7 @@
 # Get latest Jenkins update file
 - name: Get Jenkins updates
   sudo: yes
-  get_url: url={{jenkin.updates_url}} dest="{{ jenkins.updates_dest}}.tmp" thirsty=yes mode=0440 owner=jenkins group=jenkins backup=yes
+  get_url: url={{jenkin.updates_url}} dest="{{ jenkins_updates_dest}}.tmp" thirsty=yes mode=0440 owner=jenkins group=jenkins backup=yes
   register: jenkins_updates
 
 - debug: var=jenkins_updates
@@ -64,7 +64,7 @@
 # Jenkins Update-center
 - name: Update-center Jenkins
   sudo: yes
-  shell: "cat {{ jenkins.updates_dest}}.tmp | sed '1d;$d' > {{ jenkins.updates_dest}}"
+  shell: "cat {{ jenkins_updates_dest}}.tmp | sed '1d;$d' > {{ jenkins_updates_dest}}"
   when: jenkins_updates.changed
   notify: 
     - restart jenkins
@@ -76,33 +76,33 @@
   shell: cat /dev/null > /var/log/jenkins/jenkins.log
 
 - name: Wait for Jenkins to  start
-  wait_for: path=/var/log/jenkins/jenkins.log search_regex="{{ jenkins.start_phrase}}"
+  wait_for: path=/var/log/jenkins/jenkins.log search_regex="{{ jenkins_start_phrase}}"
 
 
 - name: List plugins
   sudo: yes
-  action: shell java -jar {{ jenkins.client }} -s http://127.0.0.1:{{ jenkins.local_port}}/jenkins list-plugins | cut -f 1 -d ' '
-  when: jenkins.plugins is defined
+  action: shell java -jar {{ jenkins_client }} -s http://127.0.0.1:{{ jenkins_local_port}}/jenkins list-plugins | cut -f 1 -d ' '
+  when: jenkins_plugins is defined
   register: plugins_installed
 
 # Install/update Jenkins plugins
 - name: Install/update plugins
   sudo: yes
-  action: command java -jar {{ jenkins.client }} -s http://127.0.0.1:{{ jenkins.local_port}}/jenkins install-plugin {{ item }}
+  action: command java -jar {{ jenkins_client }} -s http://127.0.0.1:{{ jenkins_local_port}}/jenkins install-plugin {{ item }}
   when: "plugins_installed.changed and plugins_installed.stdout.find('{{ item }}') == -1"
   with_items: 
-  - "{{ jenkins.plugins}}"
+  - "{{ jenkins_plugins}}"
   notify:
     - "restart jenkins"
 
 - name: List plugins to be updated
   sudo: yes
-  action: shell java -jar {{ jenkins.client }}  -s http://127.0.0.1:{{ jenkins.local_port}}/jenkins list-plugins | grep ')$' | cut -f 1 -d ' ' | sed ':a;N;$!ba;s/\n/ /g'
+  action: shell java -jar {{ jenkins_client }}  -s http://127.0.0.1:{{ jenkins_local_port}}/jenkins list-plugins | grep ')$' | cut -f 1 -d ' ' | sed ':a;N;$!ba;s/\n/ /g'
   register: plugins_updates
 
 - name: Update plugins
   sudo: yes
-  action: command java -jar {{ jenkins.client }} -s http://127.0.0.1:{{ jenkins.local_port}}/jenkins install-plugin {{ plugins_updates.stdout }}
+  action: command java -jar {{ jenkins_client }} -s http://127.0.0.1:{{ jenkins_local_port}}/jenkins install-plugin {{ plugins_updates.stdout }}
   when: plugins_updates.stdout != ''
   notify:
     - restart jenkins
@@ -128,8 +128,8 @@
   file: path=/etc/apache2/ssl state=directory owner=root group=root mode=0755
 
 - name: Create self-signed certificate.
-  command: openssl req -new -nodes -x509 -subj "{{ redmine_self_signed_cert_subj }}" -days 3650 -keyout /etc/apache2/ssl/jenkins.key -out /etc/apache2/ssl/jenkins.crt -extensions v3_ca
-    creates=/etc/apache2/ssl/jenkins.key
+  command: openssl req -new -nodes -x509 -subj "{{ jenkins_self_signed_cert_subj }}" -days 3650 -keyout /etc/apache2/ssl/jenkins.key -out /etc/apache2/ssl/jenkins.crt -extensions v3_ca
+    creates=/etc/apache2/ssl/jenkins_key
 
 - name: Templating apache2.vhost.conf
   template: src={{item.src}} dest={{item.dest}} backup=yes

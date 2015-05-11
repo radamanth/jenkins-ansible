@@ -4,9 +4,9 @@
   <version>1.480.3</version>
   <numExecutors>2</numExecutors>
   <mode>NORMAL</mode>
-  <useSecurity>{{jenkins.use_auth}}</useSecurity>
+  <useSecurity>{{jenkins_use_auth}}</useSecurity>
   <authorizationStrategy class="hudson.security.ProjectMatrixAuthorizationStrategy">
-{% for item in jenkins.users %}
+{% for item in jenkins_users %}
         <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Create:{{item.login}}</permission>
 	<permission>com.cloudbees.plugins.credentials.CredentialsProvider.Delete:{{item.login}}</permission>
 	<permission>com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains:{{item.login}}</permission>
