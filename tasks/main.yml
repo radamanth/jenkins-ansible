@@ -107,8 +107,8 @@
   notify:
     - restart jenkins
 
-- name: Enable  Security for plugin update
-  set_fact: j_use_auth="true"
+- name: Disable Security for plugin update
+  set_fact: jenkins_use_auth="true"
 
 - name: Configure jenkins
   template: src={{item.src}} dest={{item.dest}}  owner=jenkins backup=yes
@@ -139,9 +139,16 @@
 - name: Enable mod for apache2
   command: a2enmod {{item}}
   with_items:
+  - headers
   - proxy
   - proxy_http
   - ssl
+
+- name: Disable default apache2 sites
+  command: a2dissite {{item}} 
+  with_items:
+  - 000-default.conf
+  - default-ssl.conf
 
 - name: Enable jenkins Apache 2 site
   command: a2ensite jenkins.conf
