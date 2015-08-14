@@ -1,38 +1,58 @@
 ---
 
 - debug: var=jenkins_domain
+  tags:
+  - radajenkins
 
 - name: Update apt
   apt: update_cache=yes
+  tags:
+  - radajenkins
 
 - name: Configure apt key for jenkins repository
   action: apt_key url=http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key state=present
+  tags:
+  - radajenkins
 
 - name: Add jenkins APT repository
   action: apt_repository repo='deb http://pkg.jenkins-ci.org/debian binary/' state=present
+  tags:
+  - radajenkins
 
 - name: Remove non-existing src apt repository
   action: apt_repository repo='deb-src http://pkg.jenkins-ci.org/debian binary/' state=absent
+  tags:
+  - radajenkins
 
 - name: Add old-python apt repository
   action: apt_repository repo=ppa:fkrull/deadsnakes state=present
+  tags:
+  - radajenkins
 
 - name: Install jenkins
   action: apt pkg={{item}} update_cache=yes force=yes state=latest
   with_items: 
   - "{{ jenkins_packages }}"
+  tags:
+  - radajenkins
 
 - name: Add Jenkins to group shadow !
   user: name={{item.name}}  comment='Added via ansible' generate_ssh_key=yes ssh_key_bits=2048 ssh_key_passphrase={{item.passphrase}}  groups={{item.groups}}  shell=/bin/bash state=present
   with_items:
    - {name: jenkins , groups: "shadow", passphrase: "{{ jenkins_default_passphrase }}"  }
+  tags:
+  - radajenkins
 
 
 
 - name: Disable Security for plugin update
   set_fact: jenkins_use_auth="false"
+  tags:
+  - radajenkins
 
 - debug: var=jenkins_use_auth
+  tags:
+  - radajenkins
 
 - name: Configure jenkins
   template: src={{item.src}} dest={{item.dest}}  owner=jenkins backup=yes
@@ -42,24 +62,36 @@
   - {src: etc.default.jenkins.j2 , dest: /etc/default/jenkins }
   notify:
     - restart jenkins
+  tags:
+  - radajenkins
 
 - name: stop jenkins
   service: name=jenkins state=stopped
+  tags:
+  - radajenkins
 
 - name: reinit log file
   command: echo '' > /var/log/jenkins/jenkins.log
+  tags:
+  - radajenkins
 
 
 - name: Ensure var/lib/jenkins/updates exists 
   file: path=/var/lib/jenkins/updates owner=jenkins group=jenkins mode=0755 state=directory
+  tags:
+  - radajenkins
 
 # Get latest Jenkins update file
 - name: Get Jenkins updates
   sudo: yes
   get_url: url={{jenkins_updates_url}} dest="{{ jenkins_updates_dest}}.tmp" thirsty=yes mode=0440 owner=jenkins group=jenkins backup=yes
   register: jenkins_updates
+  tags:
+  - radajenkins
 
 - debug: var=jenkins_updates
+  tags:
+  - radajenkins
 
 # Jenkins Update-center
 - name: Update-center Jenkins
@@ -67,16 +99,22 @@
   shell: "cat {{ jenkins_updates_dest}}.tmp | sed '1d;$d' > {{ jenkins_updates_dest}}"
   when: jenkins_updates.changed
   notify: 
-    - restart jenkins
+  - restart jenkins
+  tags:
+  - radajenkins
 
 - name: Restart jenkins
   service: name=jenkins state=restarted
+  tags:
+  - radajenkins
 
 - name: Touch logfile
   shell: cat /dev/null > /var/log/jenkins/jenkins.log
 
 - name: Wait for Jenkins to  start
   wait_for: path=/var/log/jenkins/jenkins.log search_regex="{{ jenkins_start_phrase}}"
+  tags:
+  - radajenkins
 
 
 - name: List plugins
@@ -84,6 +122,8 @@
   action: shell java -jar {{ jenkins_client }} -s http://127.0.0.1:{{ jenkins_local_port}}/ list-plugins | cut -f 1 -d ' '
   when: jenkins_plugins is defined
   register: plugins_installed
+  tags:
+  - radajenkins
 
 # Install/update Jenkins plugins
 - name: Install/update plugins
@@ -93,12 +133,16 @@
   with_items: 
   - "{{ jenkins_plugins}}"
   notify:
-    - "restart jenkins"
+  - "restart jenkins"
+  tags:
+  - radajenkins
 
 - name: List plugins to be updated
   sudo: yes
   action: shell java -jar {{ jenkins_client }}  -s http://127.0.0.1:{{ jenkins_local_port}}/ list-plugins | grep ')$' | cut -f 1 -d ' ' | sed ':a;N;$!ba;s/\n/ /g'
   register: plugins_updates
+  tags:
+  - radajenkins
 
 - name: Update plugins
   sudo: yes
@@ -106,9 +150,13 @@
   when: plugins_updates.stdout != ''
   notify:
     - restart jenkins
+  tags:
+  - radajenkins
 
 - name: Disable Security for plugin update
   set_fact: jenkins_use_auth="true"
+  tags:
+  - radajenkins
 
 - name: Configure jenkins
   template: src={{item.src}} dest={{item.dest}}  owner=jenkins backup=yes
@@ -118,23 +166,33 @@
   - {src: etc.default.jenkins.j2 , dest: /etc/default/jenkins } 
   notify:
     - restart jenkins
+  tags:
+  - radajenkins
 
 - name: Restart jenkins
   service: name=jenkins state=restarted
+  tags:
+  - radajenkins
 
 
 # Enable and start apache
 - name: Create apache2 ssl Directory
   file: path=/etc/apache2/ssl state=directory owner=root group=root mode=0755
+  tags:
+  - radajenkins
 
 - name: Create self-signed certificate.
   command: openssl req -new -nodes -x509 -subj "{{ jenkins_self_signed_cert_subj }}" -days 3650 -keyout /etc/apache2/ssl/jenkins.key -out /etc/apache2/ssl/jenkins.crt -extensions v3_ca
     creates=/etc/apache2/ssl/jenkins_key
+  tags:
+  - radajenkins
 
 - name: Templating apache2.vhost.conf
   template: src={{item.src}} dest={{item.dest}} backup=yes
   with_items:
   - {src: jenkins.conf , dest: '/etc/apache2/sites-available/jenkins.conf'}
+  tags:
+  - radajenkins
 
 - name: Enable mod for apache2
   command: a2enmod {{item}}
@@ -143,16 +201,24 @@
   - proxy
   - proxy_http
   - ssl
+  tags:
+  - radajenkins
 
 - name: Disable default apache2 sites
   command: a2dissite {{item}} 
   with_items:
   - 000-default.conf
   - default-ssl.conf
+  tags:
+  - radajenkins
 
 - name: Enable jenkins Apache 2 site
   command: a2ensite jenkins.conf
+  tags:
+  - radajenkins
 
 - name: Restart apache
   service: name=apache2 state=restarted 
+  tags:
+  - radajenkins
 
