@@ -58,5 +58,13 @@ jenkins_plugins:
   - 'svn-release-mgr'
   - 'tracking-svn'
 
-# Slef Signed certficate subject
+# SSL Configuration.
+jenkins_ssl_path: "/etc/jenkins/ssl"
+jenkins_ssl_certificate: "{{jenkins_ssl_path}}/jenkins.crt"
+jenkins_ssl_certificate_key: "{{jenkins_ssl_path}}/jenkins.key"
+jenkins_ssl_chain_path:  "{{jenkins_ssl_path}}/jenkins.chain"
+
+# SSL Self-signed Certificate Configuration.
+jenkins_create_self_signed_cert: true
 jenkins_self_signed_cert_subj: "/C=FR/ST=France/L=Toulouse/O=IT/CN={{jenkins_domain}}"
+

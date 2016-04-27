@@ -177,13 +177,15 @@
 
 # Enable and start apache
 - name: Create apache2 ssl Directory
-  file: path=/etc/apache2/ssl state=directory owner=root group=root mode=0755
+  file: path={{jenkins_ssl_path}} state=directory owner=root group=root mode=0755
+  when: jenkins_create_self_signed_cert
   tags:
   - radajenkins
 
 - name: Create self-signed certificate.
-  command: openssl req -new -nodes -x509 -subj "{{ jenkins_self_signed_cert_subj }}" -days 3650 -keyout /etc/apache2/ssl/jenkins.key -out /etc/apache2/ssl/jenkins.crt -extensions v3_ca
-    creates=/etc/apache2/ssl/jenkins_key
+  command: openssl req -new -nodes -x509 -subj "{{ jenkins_self_signed_cert_subj }}" -days 3650 -keyout {{ jenkins_ssl_certificate_key }} -out {{ jenkins_ssl_certificate }} -extensions v3_ca
+    creates={{jenkins_ssl_certificate}}
+  when: jenkins_create_self_signed_cert
   tags:
   - radajenkins
 
